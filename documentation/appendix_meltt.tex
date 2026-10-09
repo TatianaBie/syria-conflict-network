@@ -1,0 +1,59 @@
+%----------------------------------------------------------------------
+% Appendix: Merging UCDP and ACLED with meltt
+%----------------------------------------------------------------------
+\subsection{Merging the UCDP and ACLED event data}
+\label{app:meltt}
+
+We work with the UCDP Georeferenced Event Dataset (GED) and the ACLED
+dataset, in both cases restricted to events located in Syria.\footnote{UCDP
+GED, version downloaded on 6 February 2026; ACLED Syria export, downloaded on
+4 February 2025.} The UCDP extract covers the period from 18 March 2011 to
+31 December 2024 and contains $87{,}857$ events, of which $73{,}755$ are
+state-based, $10{,}092$ non-state and $4{,}010$ one-sided events.\footnote{We
+drop four isolated UCDP events that predate the Syrian civil war: three events
+dated 2004 (one Israel--Hamas clash and two events of one-sided violence by the
+Government of Syria against civilians) and one Israel--Hezbollah event recorded
+in February 2008. All four are incidents that merely take place on Syrian
+territory; UCDP coverage of the Syrian conflict itself is continuous only from
+2011 onwards.} The ACLED extract covers the period from 1 January 2017 to
+31 January 2025 and contains $28{,}241$
+events, all of which are coded as \emph{Battles}.
+
+To combine the two datasets we use the \texttt{R} package \texttt{meltt}
+(Merging Event Data by Location, Time and Type; \citealp{Donnay2019}), which
+integrates event data from different sources and removes duplicate reports of
+the same incident. The merge is based on space, time, and two user-defined
+taxonomies that render the source-specific event categories comparable. The
+spatial-precision taxonomy maps UCDP's \texttt{where\_prec} (seven categories)
+and ACLED's \texttt{geo\_precision} (three categories) onto common levels
+(exact location vs.\ administrative unit vs.\ country; sub-regional vs.\
+sub-national vs.\ national; precise vs.\ imprecise). The violence taxonomy maps
+UCDP's \texttt{type\_of\_violence} and ACLED's \texttt{interaction} variable
+onto the common categories \emph{state-based}, \emph{non-state} and
+\emph{other}. Two events are treated as potential duplicates if they lie within
+a temporal window of one day (\texttt{twindow}~$=1$) and a spatial window of
+three kilometres (\texttt{spatwindow}~$=3$) of each other and are compatible
+along the levels of both taxonomies.
+
+The procedure identifies $5{,}198$ duplicate event pairs across the two
+sources. After collapsing these, the merged dataset contains $110{,}899$ unique
+events, of which $82{,}658$ originate from UCDP and $28{,}241$ from ACLED.
+Table~\ref{tab:meltt} summarises the two input datasets and the merged output.
+
+\begin{table}[htbp]
+\centering
+\caption{Input datasets and \texttt{meltt} output}
+\label{tab:meltt}
+\begin{tabular}{lccc}
+\hline\hline
+ & Period & Events & Contribution to merged data \\
+\hline
+UCDP GED  & 18 Mar 2011 -- 31 Dec 2024 & $87{,}857$ & $82{,}658$ \\
+ACLED     & 1 Jan 2017 -- 31 Jan 2025  & $28{,}241$ & $28{,}241$ \\
+\hline
+Duplicates identified & \multicolumn{3}{c}{$5{,}198$ event pairs} \\
+Merged dataset        & 18 Mar 2011 -- 31 Jan 2025 & \multicolumn{2}{c}{$110{,}899$} \\
+\hline\hline
+\end{tabular}
+\end{table}
+

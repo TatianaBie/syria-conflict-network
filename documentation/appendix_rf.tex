@@ -1,0 +1,82 @@
+%----------------------------------------------------------------------
+% Appendix: decomposing "Syrian insurgents" with a random forest
+%----------------------------------------------------------------------
+\subsection{Decomposing the label \emph{Syrian insurgents}}
+\label{app:rf}
+
+$63{,}791$ events in the merged data carry the actor label \emph{Syrian
+insurgents}, which in UCDP's coding stands for one or more opposition
+formations that the reporting does not identify individually. We assign these
+events to the three formations that account for most of the named opposition
+events, Ahrar al-Sham, HTS (Hayat Tahrir al-Sham) and the Free Syrian Army,
+using a random forest trained on the events where the actor is named.
+
+\paragraph{Training sample and features.}
+The training sample consists of the $9{,}830$ events in which at least one of the
+three formations appears in one of the actor columns \texttt{Side\_a\_*} or
+\texttt{Side\_b\_*}. Since several of them can fight in the same event, the
+target is not a single class but three binary indicators, one per formation.
+The predictors are year, calendar month, latitude and longitude. We use no
+further event characteristics: source, violence type and fatality counts are
+coded differently in UCDP and ACLED, so the model would partly learn the source
+rather than the actor.
+
+\paragraph{Model and performance.}
+We fit a random forest with $10$ trees on $70\%$ of the labelled events
+($6{,}881$) and evaluate it on the remaining $30\%$ ($2{,}949$); the random seed
+is fixed. Table~\ref{tab:rf_performance} reports precision, recall, $F_1$ and
+accuracy for the positive class, that is, for correctly identifying that a
+formation was present. Accuracy lies between $0.90$ and $0.93$, with precision
+and recall of similar magnitude for all three formations.
+
+\begin{table}[htbp]
+\centering
+\caption{Out-of-sample performance of the random forest (positive class)}
+\label{tab:rf_performance}
+\begin{tabular}{lcccc}
+\hline\hline
+Formation & Precision & Recall & $F_1$ & Accuracy \\
+\hline
+Ahrar al-Sham             & $0.89$ & $0.84$ & $0.86$ & $0.92$ \\
+HTS: Hayat Tahrir al-Sham & $0.94$ & $0.94$ & $0.94$ & $0.93$ \\
+Free Syrian Army          & $0.89$ & $0.86$ & $0.87$ & $0.90$ \\
+\hline\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Assignment rule.}
+For each unnamed event $i$ the forest returns a probability $\hat{p}_{ig}$ that
+formation $g$ took part in it. Formation $g$ is assigned to event $i$ whenever
+$\hat{p}_{ig}\geq\tau$, with $\tau=0.7$. Events for which no formation reaches
+the threshold are left unassigned: we prefer to lose them rather than to impose
+an actor the model is not confident about. This applies to $7{,}490$ of the
+$63{,}791$ events ($11.7\%$). Of the $56{,}301$ events that are assigned,
+$49{,}122$ receive one formation, $6{,}513$ two and $666$ all three. Expanding
+the multiple assignments into one observation per formation yields $64{,}146$
+actor level observations.
+
+\paragraph{Plausibility check.}
+The true actor is unobserved, so the predictions are compared with the area in
+which each formation operated in a given year. For every formation and year we
+keep the named events with at least $k=3$ other such events within $l=3$~km and
+take the convex hull of the retained points. $20{,}682$ of the $56{,}301$ assigned
+events fall inside at least one of these polygons; for $17{,}544$ of them
+($84.8\%$) the predicted formation is one whose polygon covers the event
+(Table~\ref{tab:rf_polygon}). Since the polygons are constructed from the same
+named events used for training, this is a consistency check rather than an
+independent validation.
+
+\begin{table}[htbp]
+\centering
+\caption{Predicted formations and their yearly areas of operation}
+\label{tab:rf_polygon}
+\begin{tabular}{lccc}
+\hline\hline
+Predicted formation & Predictions & Inside polygon & Share \\
+\hline
+Ahrar al-Sham             & $8{,}884$  & $8{,}649$ & $0.97$ \\
+HTS: Hayat Tahrir al-Sham & $13{,}033$ & $8{,}716$ & $0.67$ \\
+Free Syrian Army          & $2{,}324$  & $1{,}081$ & $0.47$ \\
+\hline\hline
+\end{tabular}
+\end{table}

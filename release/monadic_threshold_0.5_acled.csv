@@ -1,0 +1,178 @@
+name,year,Tot_Fights,Ethnicity
+Ahrar al-Sham,2017,217,Sunni
+Ahrar al-Sham,2018,254,Sunni
+Ahrar al-Sham,2019,26,Sunni
+Ahrar al-Sham,2020,14,Sunni
+Ahrar al-Sham,2021,12,Sunni
+Ahrar al-Sham,2022,39,Sunni
+Ahrar al-Sham,2023,45,Sunni
+Ahrar al-Sham,2024,15,Sunni
+Aknaf Bait al-Maqdis,2017,6,Sunni
+Al Qaeda,2017,58,Sunni
+Al Qaeda,2018,128,Sunni
+Al Qaeda,2019,28,Sunni
+Al Qaeda,2020,21,Sunni
+Al Qaeda,2021,24,Sunni
+Al Qaeda,2022,2,Sunni
+Al Qaeda,2023,6,Sunni
+Al Qaeda,2024,6,Sunni
+Faylaq al-Rahman,2017,417,Sunni
+Faylaq al-Rahman,2018,82,Sunni
+Faylaq al-Rahman,2020,5,Sunni
+Faylaq al-Rahman,2023,1,Sunni
+Faylaq al-Rahman,2024,1,Sunni
+Free Syrian Army,2017,260,Sunni
+Free Syrian Army,2018,360,Sunni
+Free Syrian Army,2019,335,Sunni
+Free Syrian Army,2020,129,Sunni
+Free Syrian Army,2021,76,Sunni
+Free Syrian Army,2022,126,Sunni
+Free Syrian Army,2023,90,Sunni
+Free Syrian Army,2024,79,Sunni
+Free Syrian Army,2025,5,Sunni
+Global Coalition Against Daesh,2017,494,Secular
+Global Coalition Against Daesh,2018,345,Secular
+Global Coalition Against Daesh,2019,102,Secular
+Global Coalition Against Daesh,2020,31,Secular
+Global Coalition Against Daesh,2021,37,Secular
+Global Coalition Against Daesh,2022,59,Secular
+Global Coalition Against Daesh,2023,75,Secular
+Global Coalition Against Daesh,2024,58,Secular
+HTS: Hayat Tahrir al-Sham,2017,1193,Sunni
+HTS: Hayat Tahrir al-Sham,2018,656,Sunni
+HTS: Hayat Tahrir al-Sham,2019,430,Sunni
+HTS: Hayat Tahrir al-Sham,2020,126,Sunni
+HTS: Hayat Tahrir al-Sham,2021,113,Sunni
+HTS: Hayat Tahrir al-Sham,2022,234,Sunni
+HTS: Hayat Tahrir al-Sham,2023,393,Sunni
+HTS: Hayat Tahrir al-Sham,2024,209,Sunni
+Harakat Nour al-Din al-Zenki,2017,33,Sunni
+Harakat Nour al-Din al-Zenki,2018,125,Sunni
+Harakat Nour al-Din al-Zenki,2019,39,Sunni
+Harakat Nour al-Din al-Zenki,2020,2,Sunni
+Harakat Nour al-Din al-Zenki,2022,4,Sunni
+Harakat Nour al-Din al-Zenki,2023,1,Sunni
+Hezbollah,2017,203,Shia
+Hezbollah,2018,67,Shia
+Hezbollah,2019,8,Shia
+Hezbollah,2020,40,Shia
+Hezbollah,2021,12,Shia
+Hezbollah,2022,14,Shia
+Hezbollah,2023,30,Shia
+Hezbollah,2024,32,Shia
+Hezbollah,2025,2,Shia
+Iran,2017,33,Shia
+Iran,2018,37,Shia
+Iran,2019,69,Shia
+Iran,2020,69,Shia
+Iran,2021,61,Shia
+Iran,2022,62,Shia
+Iran,2023,78,Shia
+Iran,2024,158,Shia
+Iraq,2017,1,Shia
+Iraq,2018,7,Shia
+Iraq,2019,3,Shia
+Iraq,2023,2,Shia
+Israel,2017,1,Jewish
+Israel,2018,3,Jewish
+Israel,2021,2,Jewish
+Israel,2022,8,Jewish
+Israel,2023,8,Jewish
+Israel,2024,13,Jewish
+JTS: Syria Liberation Front,2018,80,Sunni
+JTS: Syria Liberation Front,2021,15,Sunni
+Jaysh al-Fatah,2017,1,Sunni
+Jaysh al-Islam,2017,245,Sunni
+Jaysh al-Islam,2018,120,Sunni
+Jaysh al-Islam,2019,5,Sunni
+Jaysh al-Islam,2020,3,Sunni
+Jaysh al-Islam,2021,3,Sunni
+Jaysh al-Islam,2022,5,Sunni
+Jaysh al-Islam,2024,1,Sunni
+Jaysh al-Sanadeed,2017,2,Tribal
+Jaysh al-Sanadeed,2019,1,Tribal
+Jaysh al-Sanadeed,2022,2,Tribal
+Jaysh al-Sanadeed,2023,1,Tribal
+Jaysh al-Sanadeed,2024,1,Tribal
+Khalid ibn al Walid Army,2017,143,Sunni
+Khalid ibn al Walid Army,2018,151,Sunni
+Khalid ibn al Walid Army,2019,1,Sunni
+Khalid ibn al Walid Army,2022,2,Sunni
+Khalid ibn al Walid Army,2023,1,Sunni
+Khalid ibn al Walid Army,2024,1,Sunni
+Kurdish Front,2021,1,Kurdish
+Kurdish Front,2024,5,Kurdish
+Military Forces of Syria,2017,4580,Shia
+Military Forces of Syria,2018,1895,Shia
+Military Forces of Syria,2019,1264,Shia
+Military Forces of Syria,2020,869,Shia
+Military Forces of Syria,2021,546,Shia
+Military Forces of Syria,2022,834,Shia
+Military Forces of Syria,2023,1132,Shia
+Military Forces of Syria,2024,1362,Shia
+Military Forces of Syria,2025,118,Shia
+Peoples Protection Units,2017,2,Kurdish
+Peoples Protection Units,2018,3,Kurdish
+Peoples Protection Units,2019,16,Kurdish
+Peoples Protection Units,2020,7,Kurdish
+Peoples Protection Units,2021,9,Kurdish
+Peoples Protection Units,2022,14,Kurdish
+Peoples Protection Units,2023,23,Kurdish
+Peoples Protection Units,2024,4,Kurdish
+Russia,2017,336,Secular
+Russia,2018,100,Secular
+Russia,2019,217,Secular
+Russia,2020,207,Secular
+Russia,2021,48,Secular
+Russia,2022,15,Secular
+Russia,2023,14,Secular
+Russia,2024,44,Secular
+Syrian Democratic Forces,2017,1422,Kurdish
+Syrian Democratic Forces,2018,1140,Kurdish
+Syrian Democratic Forces,2019,878,Kurdish
+Syrian Democratic Forces,2020,389,Kurdish
+Syrian Democratic Forces,2021,519,Kurdish
+Syrian Democratic Forces,2022,619,Kurdish
+Syrian Democratic Forces,2023,509,Kurdish
+Syrian Democratic Forces,2024,867,Kurdish
+Syrian Democratic Forces,2025,100,Kurdish
+The Islamic State,2017,3865,Sunni
+The Islamic State,2018,1173,Sunni
+The Islamic State,2019,411,Sunni
+The Islamic State,2020,360,Sunni
+The Islamic State,2021,400,Sunni
+The Islamic State,2022,514,Sunni
+The Islamic State,2023,383,Sunni
+The Islamic State,2024,600,Sunni
+The Islamic State,2025,16,Sunni
+The Levantine Front,2017,15,Sunni
+The Levantine Front,2018,14,Sunni
+The Levantine Front,2019,9,Sunni
+The Levantine Front,2020,25,Sunni
+The Levantine Front,2021,27,Sunni
+The Levantine Front,2022,61,Sunni
+The Levantine Front,2023,11,Sunni
+The Levantine Front,2024,25,Sunni
+The Southern Front,2017,126,Secular
+The Southern Front,2018,14,Secular
+The Southern Front,2019,1,Secular
+The Southern Front,2021,1,Secular
+The Southern Front,2024,35,Secular
+The Southern Front,2025,2,Secular
+Turkey,2017,210,Sunni
+Turkey,2018,502,Sunni
+Turkey,2019,484,Sunni
+Turkey,2020,273,Sunni
+Turkey,2021,239,Sunni
+Turkey,2022,123,Sunni
+Turkey,2023,67,Sunni
+Turkey,2024,115,Sunni
+Turkey,2025,50,Sunni
+USA,2017,318,Secular
+USA,2018,61,Secular
+USA,2019,5,Secular
+USA,2020,10,Secular
+USA,2021,3,Secular
+USA,2022,8,Secular
+USA,2023,7,Secular
+USA,2024,8,Secular

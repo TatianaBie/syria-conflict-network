@@ -1,0 +1,30 @@
+.DS_Store
+.env
+.RData
+.Rhistory
+__pycache__/
+*.py[cod]
+~$*
+.ipynb_checkpoints/
+
+# Licensed or large source data. Keep these locally or in approved storage.
+01 - Data/01 - Source_Data/ACLED/
+01 - Data/01 - Source_Data/UCDP/
+01 - Data/02 - Source_Data-cleaned/dataset_meltt.csv
+01 - Data/02 - Source_Data-cleaned/dataset_threshold_*.csv
+01 - Data/02 - Source_Data-cleaned/dataset_threshold_*_classification_report.csv
+01 - Data/02 - Source_Data-cleaned/dataset_threshold_*_validation_summary.csv
+01 - Data/02 - Source_Data-cleaned/dataset_threshold_*_model.pkl
+01 - Data/02 - Source_Data-cleaned/dataset_threshold_*_train_columns.pkl
+01 - Data/02 - Source_Data-cleaned/acled_cleaned.csv
+01 - Data/02 - Source_Data-cleaned/ucdp_cleaned.csv
+01 - Data/02 - Source_Data-cleaned/UCDP_cleaned_russia_involvement.csv
+01 - Data/02 - Source_Data-cleaned/meltt_duplicates.csv
+01 - Data/02 - Source_Data-cleaned/table_*.csv
+
+# Pairwise tables are regenerated, except for the frozen OldStanford input.
+01 - Data/03 - Pairwise_connections/*
+!01 - Data/03 - Pairwise_connections/OldStanford-connections.csv
+
+# Working outputs are regenerated. Approved release files live in release/.
+01 - Data/04 - Monadic&Dyadic_structure/

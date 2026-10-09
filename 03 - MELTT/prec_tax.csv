@@ -1,0 +1,11 @@
+data.source;base.categories;Level_1;Level_2;Level_3;Level_4
+ucdp;1;exact town, area, city, village;Close;Subregional;precise
+ucdp;2;fuzzy space around town, city, village (outskirts, checkpoints);Close;Subregional;imprecise
+ucdp;3;within a 2nd order admin region;Admin Unit;Subregional;imprecise
+ucdp;4;within a 1st order admin region;Admin Unit;Subnational;imprecise
+ucdp;5;within country;Country Unit;National;imprecise
+ucdp;6;within country;Country Unit;National;imprecise
+ucdp;7;within country;Country Unit;National;imprecise
+acled;1;exact town, area, city, village;Close;Subregional;precise
+acled;2;within a 2nd order admin region;Admin Unit;Subregional;imprecise
+acled;3;within a 1st order admin region;Admin Unit;Subnational;imprecise

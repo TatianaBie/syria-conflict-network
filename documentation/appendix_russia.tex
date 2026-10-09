@@ -1,0 +1,107 @@
+%----------------------------------------------------------------------
+% Appendix: coding Russian involvement in UCDP events, 2015--2016
+%----------------------------------------------------------------------
+\subsection{Coding Russian involvement, 2015--2016}
+\label{app:russia}
+
+Although the Russian air campaign in Syria began on 30 September 2015, UCDP
+GED lists Russia as a party to only one event in our extract, an event in the
+conflict between the Government of Russia and the Caucasus Emirate. Russian
+air support to the Military Forces of Syria is otherwise not recorded in the
+actor columns. We recover it by combining two independent signals, textual
+evidence in the UCDP source fields and proximity to Russian strikes documented
+by Airwars, and add Russia as an actor only when both agree.
+Table~\ref{tab:russia} summarises each step for 2015 and 2016.
+
+\paragraph{Textual evidence.}
+We search the source fields of every UCDP event, that is, the cited articles,
+their headlines and the original sources, for references to Russia, such as ``Russian warplanes'', ``Russian airstrikes'' or ``Russian
+forces''. Event $i$ receives $R_i=1$ if at least one field mentions Russia,
+and $R_i=0$ otherwise. The flag is based on the text alone; the date and
+location of an event play no role at this stage.
+
+\paragraph{Airwars strikes.}
+Airwars documents incidents of alleged civilian harm from military action and
+records the belligerents to which each incident is attributed. We collect all
+$1{,}811$ incidents in Syria attributed to the Russian military between
+30 September 2015 and 31 December 2016 ($336$ in 2015 and $1{,}475$ in
+2016).\footnote{Airwars, \emph{Russian Military in Syria} incident archive,
+\url{https://airwars.org}, accessed October 2026.} Each incident has a date and
+coordinates, which for most incidents are precise only to the level of a
+village, neighbourhood or town.
+
+For UCDP event $i$ with start date $t_i$ and Airwars incident $k$ with date
+$t_k$, we define the match indicator
+\begin{equation}
+  M_i(\Delta_t,\Delta_d) \;=\; \mathbf{1}\bigl\{\exists\, k \in \mathcal{A}:
+  \; |t_i - t_k| \le \Delta_t \;\text{ and }\; d_{ik} \le \Delta_d \bigr\},
+  \label{eq:russia_match}
+\end{equation}
+where $\mathcal{A}$ is the set of Airwars incidents, $\Delta_t$ is measured in
+days and $d_{ik}$ is the great-circle distance between the two locations in
+kilometres. One qualifying incident is sufficient. We use a \emph{strict}
+match, $M_i(0,5)$, which requires an Airwars incident on the same day within
+$5$~km, and a \emph{broad} match, $M_i(1,15)$, which allows a difference of
+one day and a distance of up to $15$~km. The broad window accounts for the
+coarse geolocation of Airwars incidents and for reports that date an attack to
+the following day. Every strict match is also a broad match.
+
+\paragraph{Assignment rule.}
+Russia is added as an actor to event $i$ if and only if
+\begin{equation}
+  R_i \cdot M_i(1,15) \;=\; 1,
+  \label{eq:russia_assign}
+\end{equation}
+that is, if the event's own sources mention Russia and a Russian strike is
+documented nearby on the same or an adjacent day. Neither signal suffices on
+its own: a textual mention may refer to Russia only in passing, and a nearby
+strike may be unrelated to the reported event. Russia is entered as an
+additional actor on the side it supported, which in $206$ of the $208$ events
+is the side of the Military Forces of Syria. The $132$ events that also
+satisfy the strict match provide a more conservative alternative.
+
+\paragraph{Manual review.}
+We read the source text of every event that satisfies
+equation~\eqref{eq:russia_assign}. Five events are removed because Russia
+appears in them only as a landmark (shelling near the Russian embassy in
+Damascus) or as a party to a ceasefire agreement. One event is added in which
+the reference to Russia appears only in UCDP's location description. After
+the review, $208$ events satisfy the assignment rule, $116$ in 2015 and $92$
+in 2016.
+
+\begin{table}[htbp]
+\centering
+\caption{Russian involvement in UCDP events, 2015--2016}
+\label{tab:russia}
+\begin{tabular}{lccc}
+\hline\hline
+ & 2015 & 2016 & Total \\
+\hline
+UCDP events                                     & $11{,}382$ & $9{,}472$ & $20{,}854$ \\
+\quad dated on or after 30 September 2015       & $3{,}116$  & $9{,}472$ & $12{,}588$ \\
+Textual evidence, $R_i=1$                       & $225$      & $145$     & $370$ \\
+Strict Airwars match, $M_i(0,5)=1$              & $375$      & $1{,}474$ & $1{,}849$ \\
+Broad Airwars match, $M_i(1,15)=1$              & $1{,}071$  & $3{,}210$ & $4{,}281$ \\
+\hline
+Textual evidence and strict match               & $67$       & $65$      & $132$ \\
+Textual evidence and broad match                & $116$      & $92$      & $208$ \\
+\hline
+Events with Russia as an actor$^{a}$            & $117$      & $92$      & $209$ \\
+\hline\hline
+\end{tabular}
+
+\vspace{0.5ex}
+\begin{minipage}{0.9\linewidth}
+\footnotesize
+\emph{Notes:} Counts after the manual review. $^{a}$Events satisfying
+equation~\eqref{eq:russia_assign}, plus the one event that UCDP itself codes
+with the Government of Russia as a party (Russia vs.\ Caucasus Emirate,
+October 2015).
+\end{minipage}
+\end{table}
+
+\paragraph{Limitations.}
+Airwars records only incidents with reported civilian harm, so the procedure
+yields a lower bound on Russian participation. Events outside the Airwars
+period, including all events after 2016, cannot be matched and are not
+reassigned.
