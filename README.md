@@ -8,7 +8,7 @@ The reproducible core starts from:
 
 `01 - Data/02 - Source_Data-cleaned/dataset_meltt.csv`
 
-This file is copied into a local checkout but ignored by Git because it is large and contains ACLED-derived event data. Store and share it only through an approved channel.
+This event-level file is ignored by Git and is not distributed through this public repository. Users must obtain the underlying source data separately and place the file at this path to reproduce the pipeline.
 
 The repository also treats the following as frozen inputs:
 
@@ -18,7 +18,7 @@ The repository also treats the following as frozen inputs:
 
 The ACLED/UCDP cleaners and MELTT R script are retained for provenance, but the default production run begins with the frozen MELTT file.
 
-## Known issue to resolve before a final public release
+## Known limitation
 
 `02 - Data_Cleaning/acled_cleaning.py` currently maps every label containing `Communal Militia (Syria)` or `Militia (Syria)` to `Military Forces of Syria`. This is broader than the explicitly reviewed crosswalk and should be narrowed and audited before rerunning the upstream raw-data pipeline.
 
@@ -87,4 +87,4 @@ The ten canonical outputs from the current production run are included in `relea
 
 ## Data sharing
 
-The raw ACLED and UCDP directories are deliberately absent. UCDP data can be downloaded under its stated licence from <https://ucdp.uu.se/downloads/>. ACLED data and ACLED-derived event-level files must be handled under the applicable ACLED licence at <https://acleddata.com/eula> and should not be committed to a public repository.
+This is a public code and replication repository. It includes the scripts, actor crosswalks, documentation, and aggregated monadic and dyadic outputs, but not the raw ACLED or UCDP files or the event-level MELTT dataset. UCDP data can be downloaded under its stated licence from <https://ucdp.uu.se/downloads/>. ACLED data must be obtained directly from ACLED and used in accordance with the applicable licence at <https://acleddata.com/eula>.
