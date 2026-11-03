@@ -76,7 +76,7 @@ def build_monadic_dataset(dataset: str, threshold: float) -> pd.DataFrame:
 
     if df.empty:
         print(f"Warning: no rows found for dataset={dataset} in {input_path}; writing an empty output file.")
-        return pd.DataFrame(columns=["name", "year", "Tot_Fights", "Ethnicity"])
+        return pd.DataFrame(columns=["name", "year", "Tot_Fights", "Ethnicity", "start_year", "end_year"])
 
     if "id" not in df.columns:
         df["id"] = df.index + 1
@@ -113,6 +113,15 @@ def build_monadic_dataset(dataset: str, threshold: float) -> pd.DataFrame:
     )
     monadic = df_final.merge(df_ethnicity[["name", "Ethnicity"]], on="name", how="left")
     monadic = monadic.sort_values(["name", "year"]).reset_index(drop=True)
+
+    year_bounds = (
+        monadic.groupby("name", dropna=False)["year"]
+        .agg(["min", "max"])
+        .rename(columns={"min": "start_year", "max": "end_year"})
+        .reset_index()
+    )
+    monadic = monadic.merge(year_bounds, on="name", how="left")
+    monadic = monadic.sort_values(["name", "year"]).reset_index(drop=True)
     return monadic
 
 
@@ -141,7 +150,17 @@ def main() -> None:
     output_path = output_dir / f"monadic_threshold_{args.threshold}_{args.dataset}.csv"
     df_output.to_csv(output_path, index=False)
 
+    years_summary = (
+        df_output[["name", "Ethnicity", "start_year", "end_year"]]
+        .drop_duplicates()
+        .sort_values("name")
+        .reset_index(drop=True)
+    )
+    years_path = output_path.with_name(f"{output_path.stem}_years.csv")
+    years_summary.to_csv(years_path, index=False)
+
     print(f"Saved monadic output to: {output_path}")
+    print(f"Saved year summary to: {years_path}")
     print(f"Rows: {len(df_output)} | Columns: {list(df_output.columns)}")
 
 
