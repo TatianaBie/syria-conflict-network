@@ -15,6 +15,9 @@ of observed territorial control.
 - RF-expanded physical rows remain independent. Within each expanded row, the
   same umbrella actor is counted at most once. This matches the monadic
   deduplication rule.
+- The event input is resolved from the same canonical thresholded MELTT files
+  as the monadic pipeline: `dataset_threshold_{threshold}_meltt.csv`. The
+  committed results use threshold 0.5.
 
 ## Spatial specification
 
@@ -61,7 +64,7 @@ From the repository root, run:
 
 ```bash
 python "05 - Territory_presence/scripts/run_territory_presence.py" \
-  --events /path/to/dataset_meltt_2026_rf_expanded.csv \
+  --threshold 0.5 \
   --actor-mapping "01 - Data/Merging/Merging_names.xlsx" \
   --grid "05 - Territory_presence/results/grid_syria_0p1deg.csv" \
   --population-dir /path/to/worldpop_directory \
@@ -70,4 +73,6 @@ python "05 - Territory_presence/scripts/run_territory_presence.py" \
 ```
 
 The population directory must contain `syr_ppp_2011.tif` through
-`syr_ppp_2020.tif`.
+`syr_ppp_2020.tif`. Unless `--events` is supplied explicitly, the runner reads
+`01 - Data/02 - Source_Data-cleaned/dataset_threshold_0.5_meltt.csv`. Change
+`--threshold` to use another canonical monadic/dyadic threshold file.

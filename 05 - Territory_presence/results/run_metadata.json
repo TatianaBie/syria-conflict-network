@@ -38,6 +38,8 @@
     "USA"
   ],
   "actor_count": 35,
+  "meltt_threshold": 0.5,
+  "event_input": "/Users/tatianabielakova/Desktop/KOF/syria-conflict-network/01 - Data/02 - Source_Data-cleaned/dataset_threshold_0.5_meltt.csv",
   "operation_peace_spring_mapping": "Turkey",
   "is_in_default_denominator": true,
   "expanded_row_rule": "RF-expanded rows remain independent; each actor is counted at most once per physical expanded row",
@@ -68,11 +70,11 @@
   "event_population_weighted": true,
   "grid_population_weighted": true,
   "grid_cells": 1835,
-  "actor_event_occurrences_2011_2024": 215320,
-  "expanded_rows_2011_2024": 101649,
-  "source_event_ids_2011_2024": 97435,
+  "actor_event_occurrences_2011_2024": 235874,
+  "expanded_rows_2011_2024": 111811,
+  "source_event_ids_2011_2024": 97090,
   "mapping_aliases": 77,
   "mapping_umbrella_values": 36,
   "unretained_labels": 294,
-  "unretained_occurrences": 19115
+  "unretained_occurrences": 19163
 }
