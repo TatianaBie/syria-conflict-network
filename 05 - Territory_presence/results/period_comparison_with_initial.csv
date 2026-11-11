@@ -1,0 +1,4 @@
+period,total_variation_percentage_points,largest_absolute_change_actor,largest_absolute_change_percentage_points,initial_top_actor,rerun_top_actor,initial_turkey_share,rerun_turkey_share,initial_is_share,rerun_is_share,pearson_correlation
+2013-2016,10.589382717784037,HTS: Hayat Tahrir al-Sham,7.381347912243047,Military Forces of Syria,Military Forces of Syria,0.0003595413808299,0.00035497748183576007,0.1005406218734518,0.08024896558161014,0.9805401079497045
+2017-2020,16.142998226027462,HTS: Hayat Tahrir al-Sham,8.188676954287399,Military Forces of Syria,Military Forces of Syria,0.0152962693751277,0.022116819805346154,0.1029957983876573,0.14087758959553293,0.9626611533828757
+2021-2024,9.345901412294602,HTS: Hayat Tahrir al-Sham,5.573778452913725,Military Forces of Syria,Military Forces of Syria,0.0123590077579113,0.0165738984833772,0.0869273137752904,0.08675122554491221,0.9842882130886724

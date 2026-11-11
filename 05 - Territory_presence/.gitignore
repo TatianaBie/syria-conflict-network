@@ -1,0 +1,7 @@
+# Large external source inputs are recorded by checksum in results/input_manifest.csv.
+inputs/*.tif
+inputs/dataset_meltt_2026_rf_expanded.csv
+
+# Local Python and plotting caches.
+__pycache__/
+.matplotlib/
