@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 """Estimate population-weighted spatial military presence in Syria.
 
-This reproduces the *method* of the period-level section of
-``territory_activity.ipynb``. It is NOT a measure of independently observed
-territorial control: it allocates grid-cell influence from geolocated combat
-activity (UCDP/ACLED), then aggregates with WorldPop population weights.
-
 Inputs
 ------
 * Harmonized MELTT CSV with ``id``, ``year``, ``latitude``, ``longitude``
