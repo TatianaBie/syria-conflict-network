@@ -10,6 +10,10 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.utils import get_column_letter
+from openpyxl.utils.dataframe import dataframe_to_rows
 
 from estimate_territorial_presence import (
     ACTORS,
@@ -17,6 +21,7 @@ from estimate_territorial_presence import (
     PERIODS,
     aggregate_shares,
     estimate_period,
+    integrate_cell_population,
     load_actor_events,
     load_actor_mapping,
     load_grid,
@@ -59,6 +64,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--grid", type=Path, required=True)
     parser.add_argument("--population-dir", type=Path, required=True)
     parser.add_argument("--initial-period-shares", type=Path, required=True)
+    parser.add_argument(
+        "--previous-period-shares",
+        type=Path,
+        help="Optional period shares from the previous population-weighting method.",
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--bandwidth-km", type=float, default=20.0)
     parser.add_argument("--cutoff-sigma", type=float, default=3.0)
@@ -96,6 +106,227 @@ def conditional_non_is(shares: pd.DataFrame, period_column: str) -> pd.DataFrame
     result = shares[[period_column, *columns]].copy()
     result[columns] = result[columns].div(result[columns].sum(axis=1), axis=0)
     return result
+
+
+def shares_by_actor(shares: pd.DataFrame, period_column: str) -> pd.DataFrame:
+    """Return the same shares with actors in rows and periods in columns."""
+    return (
+        shares.set_index(period_column)
+        .reindex(columns=ACTORS)
+        .T.rename_axis("umbrella_actor")
+        .reset_index()
+    )
+
+
+def _write_frame(
+    sheet,
+    frame: pd.DataFrame,
+    *,
+    start_row: int = 1,
+    banded_rows: bool = True,
+) -> tuple[int, int]:
+    """Write one dataframe and apply the shared review-workbook style."""
+    clean = frame.astype(object).where(pd.notna(frame), None)
+    rows = list(dataframe_to_rows(clean, index=False, header=True))
+    for row_offset, values in enumerate(rows):
+        for column, value in enumerate(values, start=1):
+            sheet.cell(start_row + row_offset, column, value)
+
+    last_row = start_row + len(rows) - 1
+    last_column = len(frame.columns)
+    header_fill = PatternFill("solid", fgColor="193B63")
+    alternate_fill = PatternFill("solid", fgColor="D9EEF7")
+    for cell in sheet[start_row][:last_column]:
+        cell.fill = header_fill
+        cell.font = Font(name="Arial", size=10, bold=True, color="FFFFFF")
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    sheet.row_dimensions[start_row].height = 30
+
+    for row in range(start_row + 1, last_row + 1):
+        if banded_rows and (row - start_row) % 2 == 1:
+            for cell in sheet[row][:last_column]:
+                cell.fill = alternate_fill
+        for cell in sheet[row][:last_column]:
+            cell.font = Font(name="Arial", size=10)
+            cell.alignment = Alignment(vertical="center")
+
+    for column, name in enumerate(frame.columns, start=1):
+        values = [str(name), *["" if value is None else str(value) for value in clean[name]]]
+        width = min(max(len(value) for value in values) + 2, 38)
+        sheet.column_dimensions[get_column_letter(column)].width = max(width, 11)
+    sheet.sheet_view.showGridLines = False
+    return last_row, last_column
+
+
+def save_review_workbook(
+    path: Path,
+    threshold: float,
+    period_shares_by_actor: pd.DataFrame,
+    period_shares: pd.DataFrame,
+    yearly_shares: pd.DataFrame,
+    comparison: pd.DataFrame,
+    summary: pd.DataFrame,
+    audit: pd.DataFrame,
+    manifest: pd.DataFrame,
+    previous_comparison: pd.DataFrame | None = None,
+    previous_summary: pd.DataFrame | None = None,
+) -> None:
+    """Create the formatted workbook from the same dataframes as the CSV outputs."""
+    workbook = Workbook()
+    summary_sheet = workbook.active
+    summary_sheet.title = "Summary"
+
+    summary_sheet["A2"] = "Territorial-presence rerun"
+    summary_sheet["A2"].font = Font(name="Arial", size=14, bold=True, color="193B63")
+    summary_sheet["A4"] = (
+        "Full event-level rerun from the canonical MELTT "
+        f"threshold-{threshold_label(threshold)} input, with {len(ACTORS)} "
+        "umbrella actors, WorldPop weighting, and monadic-style "
+        "RF-row deduplication."
+    )
+    summary_sheet["A4"].font = Font(name="Arial", size=10, italic=True, color="4A4A4A")
+
+    share_sums = period_shares.set_index("period")[list(ACTORS)].sum(axis=1)
+    summary_table = summary.copy()
+    summary_table["rerun_share_sum"] = summary_table["period"].map(share_sums)
+    summary_table = summary_table.rename(
+        columns={
+            "period": "Period",
+            "total_variation_percentage_points": "Distribution shift (pp)",
+            "largest_absolute_change_actor": "Largest-change actor",
+            "largest_absolute_change_percentage_points": "Largest change (pp)",
+            "initial_top_actor": "Initial top actor",
+            "rerun_top_actor": "Rerun top actor",
+            "initial_turkey_share": "Initial Turkey",
+            "rerun_turkey_share": "Rerun Turkey",
+            "initial_is_share": "Initial IS",
+            "rerun_is_share": "Rerun IS",
+            "pearson_correlation": "Correlation",
+            "rerun_share_sum": "Rerun share sum",
+        }
+    )
+    _write_frame(summary_sheet, summary_table, start_row=6, banded_rows=False)
+    for row in range(7, 10):
+        for column in (2, 4, 11):
+            summary_sheet.cell(row, column).number_format = "0.000"
+        for column in (7, 8, 9, 10, 12):
+            summary_sheet.cell(row, column).number_format = "0.000%"
+
+    method_rows = [
+        ("Method", ""),
+        (
+            "Actor universe",
+            f"{len(ACTORS)} actors; Operation Peace Spring maps to Turkey",
+        ),
+        ("Spatial model", "20 km Gaussian bandwidth; kernels truncated at 60 km"),
+        (
+            "Population weighting",
+            "Events weighted equally; WorldPop summed within cells at aggregation",
+        ),
+        ("Period rasters", "2013, 2017 and 2020 for the three four-year windows"),
+        ("Yearly rasters", "Same-year raster through 2020; 2020 raster for 2021–2024"),
+        (
+            "Interpretation",
+            "Population-weighted spatial conflict presence, not independently observed territorial control",
+        ),
+    ]
+    for row, (label, value) in enumerate(method_rows, start=11):
+        summary_sheet.cell(row, 1, label)
+        summary_sheet.cell(row, 2, value)
+        summary_sheet.cell(row, 1).font = Font(name="Arial", size=10, bold=True)
+        summary_sheet.cell(row, 2).font = Font(name="Arial", size=10)
+    for cell in summary_sheet[11][:12]:
+        cell.fill = PatternFill("solid", fgColor="D9EAF7")
+        cell.font = Font(name="Arial", size=10, bold=True, color="193B63")
+    summary_sheet.column_dimensions["A"].width = 22
+    summary_sheet.column_dimensions["B"].width = 38
+    summary_sheet.freeze_panes = "A6"
+
+    period_sheet = workbook.create_sheet("Period shares")
+    period_last_row, period_last_column = _write_frame(
+        period_sheet, period_shares_by_actor
+    )
+    for row in period_sheet.iter_rows(
+        min_row=2, max_row=period_last_row, min_col=2, max_col=period_last_column
+    ):
+        for cell in row:
+            cell.number_format = "0.000%"
+    period_sheet.freeze_panes = "B2"
+
+    yearly_sheet = workbook.create_sheet("Yearly shares")
+    yearly_last_row, yearly_last_column = _write_frame(yearly_sheet, yearly_shares)
+    for row in yearly_sheet.iter_rows(
+        min_row=2, max_row=yearly_last_row, min_col=2, max_col=yearly_last_column
+    ):
+        for cell in row:
+            cell.number_format = "0.000%"
+    yearly_sheet.freeze_panes = "B2"
+
+    comparison_sheet = workbook.create_sheet("Actor comparison")
+    comparison_last_row, _ = _write_frame(comparison_sheet, comparison)
+    for row in comparison_sheet.iter_rows(
+        min_row=2, max_row=comparison_last_row, min_col=3, max_col=5
+    ):
+        for cell in row:
+            cell.number_format = "0.000%"
+    for cell in comparison_sheet["F"][1:comparison_last_row]:
+        cell.number_format = "0.000"
+    comparison_sheet.freeze_panes = "C2"
+
+    if previous_comparison is not None and previous_summary is not None:
+        method_sheet = workbook.create_sheet("Population method comparison")
+        method_summary = previous_summary.rename(
+            columns={
+                "period": "Period",
+                "total_variation_percentage_points": "Distribution shift (pp)",
+                "largest_absolute_change_actor": "Largest-change actor",
+                "largest_absolute_change_percentage_points": "Largest change (pp)",
+                "previous_top_actor": "Previous top actor",
+                "updated_top_actor": "Updated top actor",
+                "previous_turkey_share": "Previous Turkey",
+                "updated_turkey_share": "Updated Turkey",
+                "previous_is_share": "Previous IS",
+                "updated_is_share": "Updated IS",
+                "pearson_correlation": "Correlation",
+            }
+        )
+        summary_last_row, _ = _write_frame(
+            method_sheet, method_summary, banded_rows=False
+        )
+        for row in range(2, summary_last_row + 1):
+            for column in (2, 4, 11):
+                method_sheet.cell(row, column).number_format = "0.000"
+            for column in (7, 8, 9, 10):
+                method_sheet.cell(row, column).number_format = "0.000%"
+
+        detail_start = summary_last_row + 3
+        detail_last_row, _ = _write_frame(
+            method_sheet,
+            previous_comparison,
+            start_row=detail_start,
+        )
+        for row in method_sheet.iter_rows(
+            min_row=detail_start + 1,
+            max_row=detail_last_row,
+            min_col=3,
+            max_col=5,
+        ):
+            for cell in row:
+                cell.number_format = "0.000%"
+        for cell in method_sheet["F"][detail_start:detail_last_row]:
+            cell.number_format = "0.000"
+        method_sheet.freeze_panes = f"C{detail_start + 1}"
+
+    audit_sheet = workbook.create_sheet("Mapping audit")
+    _write_frame(audit_sheet, audit)
+    audit_sheet.freeze_panes = "A2"
+
+    inputs_sheet = workbook.create_sheet("Inputs")
+    _write_frame(inputs_sheet, manifest.drop(columns="path"))
+    inputs_sheet.column_dimensions["C"].width = 68
+    inputs_sheet.freeze_panes = "A2"
+
+    workbook.save(path)
 
 
 def save_share_plot(shares: pd.DataFrame, index_column: str, path: Path) -> None:
@@ -178,12 +409,22 @@ def main() -> None:
     )
     grid = load_grid(args.grid)
     grid.to_csv(args.output_dir / "grid_syria_0p1deg.csv", index=False)
+    raster_years = sorted(
+        {period[3] for period in PERIODS} | set(range(2011, 2021))
+    )
+    cell_populations = {
+        year: integrate_cell_population(
+            args.population_dir / f"syr_ppp_{year}.tif",
+            grid.lon.to_numpy(),
+            grid.lat.to_numpy(),
+        )
+        for year in raster_years
+    }
 
     common = dict(
         bandwidth_km=args.bandwidth_km,
         prior_weight=args.prior,
         cutoff_sigma=args.cutoff_sigma,
-        event_population_weight=True,
     )
     period_frames = [
         estimate_period(
@@ -191,6 +432,7 @@ def main() -> None:
             grid,
             args.population_dir,
             period=period,
+            cell_population=cell_populations[period[3]],
             **common,
         )
         for period in PERIODS
@@ -207,6 +449,7 @@ def main() -> None:
             grid,
             args.population_dir,
             period=period,
+            cell_population=cell_populations[period[3]],
             **common,
         )
         for period in yearly_periods
@@ -226,6 +469,10 @@ def main() -> None:
         args.output_dir / "spatial_actor_allocations_yearly.csv", index=False
     )
     period_shares.to_csv(args.output_dir / "actor_shares_by_period.csv", index=False)
+    period_shares_by_actor = shares_by_actor(period_shares, "period")
+    period_shares_by_actor.to_csv(
+        args.output_dir / "actor_shares_by_period_by_actor.csv", index=False
+    )
     yearly_shares.to_csv(args.output_dir / "actor_shares_yearly.csv", index=False)
     conditional_non_is(period_shares, "period").to_csv(
         args.output_dir / "actor_shares_by_period_conditional_on_non_IS.csv",
@@ -253,6 +500,38 @@ def main() -> None:
     summary.to_csv(
         args.output_dir / "period_comparison_with_initial.csv", index=False
     )
+    previous_comparison = None
+    previous_summary = None
+    if args.previous_period_shares is not None:
+        previous_comparison, previous_summary = comparison_with_initial(
+            args.previous_period_shares, period_shares
+        )
+        previous_comparison = previous_comparison.rename(
+            columns={
+                "initial_share": "previous_share",
+                "rerun_share": "updated_share",
+            }
+        )
+        previous_summary = previous_summary.rename(
+            columns={
+                "initial_top_actor": "previous_top_actor",
+                "rerun_top_actor": "updated_top_actor",
+                "initial_turkey_share": "previous_turkey_share",
+                "rerun_turkey_share": "updated_turkey_share",
+                "initial_is_share": "previous_is_share",
+                "rerun_is_share": "updated_is_share",
+            }
+        )
+        previous_comparison.to_csv(
+            args.output_dir
+            / "actor_share_comparison_with_previous_population_method.csv",
+            index=False,
+        )
+        previous_summary.to_csv(
+            args.output_dir
+            / "period_comparison_with_previous_population_method.csv",
+            index=False,
+        )
 
     save_share_plot(
         period_shares,
@@ -272,6 +551,18 @@ def main() -> None:
         (f"events_threshold_{threshold_label(args.threshold)}", events_path, True, True),
         ("actor_mapping", args.actor_mapping, True, True),
         ("initial_period_shares", args.initial_period_shares, False, False),
+        *(
+            [
+                (
+                    "previous_population_method_period_shares",
+                    args.previous_period_shares,
+                    False,
+                    False,
+                )
+            ]
+            if args.previous_period_shares is not None
+            else []
+        ),
         ("grid_source", args.grid, True, True),
         *[
             (
@@ -323,8 +614,13 @@ def main() -> None:
         "bandwidth_km": args.bandwidth_km,
         "cutoff_sigma": args.cutoff_sigma,
         "pseudo_activity_per_actor_cell": args.prior,
-        "event_population_weighted": True,
-        "grid_population_weighted": True,
+        "event_population_weighted": False,
+        "cell_population_weighted": True,
+        "cell_population_measurement": (
+            "Sum of WorldPop people-per-pixel values whose centres fall within "
+            "each 0.1-degree grid cell"
+        ),
+        "population_applied_once": True,
         "grid_cells": len(grid),
         "actor_event_occurrences_2011_2024": len(events),
         "expanded_rows_2011_2024": int(events["_expanded_row_id"].nunique()),
@@ -336,6 +632,20 @@ def main() -> None:
     }
     (args.output_dir / "run_metadata.json").write_text(
         json.dumps(metadata, indent=2) + "\n"
+    )
+
+    save_review_workbook(
+        args.output_dir / "territory_presence_results.xlsx",
+        args.threshold,
+        period_shares_by_actor,
+        period_shares,
+        yearly_shares,
+        comparison,
+        summary,
+        audit,
+        manifest,
+        previous_comparison,
+        previous_summary,
     )
 
     period_check = period_shares[list(ACTORS)].sum(axis=1)

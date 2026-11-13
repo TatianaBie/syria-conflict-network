@@ -25,8 +25,9 @@ of observed territorial control.
 - Gaussian bandwidth: 20 km.
 - Kernel cutoff: 60 km (three bandwidths).
 - Prior: 0.05 per actor and grid cell.
-- Events are weighted by WorldPop population at the event location.
-- Aggregate shares are weighted by WorldPop population at grid-cell centres.
+- Events receive equal weight when estimating actor presence within each cell.
+- WorldPop people-per-pixel values are summed within each 0.1-degree grid cell.
+- Aggregate shares are weighted once, using the resulting cell populations.
 - Four-year windows use the 2013, 2017 and 2020 rasters respectively.
 - Yearly estimates use the same-year raster for 2011–2020 and the 2020 raster
   for 2021–2024.
@@ -37,6 +38,10 @@ of observed territorial control.
   period-only command-line interface.
 - `scripts/run_territory_presence.py`: complete period and yearly workflow.
 - `results/actor_shares_by_period.csv`: primary four-year-window output.
+- `results/actor_shares_by_period_by_actor.csv`: the same period shares with
+  umbrella actors in rows and four-year windows in columns.
+- `results/actor_shares_by_period_previous_population_method.csv`: retained
+  baseline used to reproduce the population-method comparison.
 - `results/actor_shares_yearly.csv`: yearly output for 2011–2024.
 - `results/spatial_actor_allocations_by_period.csv`: period-by-cell allocations.
 - `results/spatial_actor_allocations_yearly.csv`: yearly cell allocations.
@@ -44,11 +49,19 @@ of observed territorial control.
 - `results/actor_share_comparison_with_initial.csv`: actor-level comparison with
   the initial period results.
 - `results/period_comparison_with_initial.csv`: compact comparison summary.
+- `results/*previous_population_method.csv`: actor-level and period-level
+  comparisons with the former double-weighted, centre-sampled method.
 - `results/actor_mapping_audit.csv`: labels excluded because they are not in the
   mapping or final actor universe.
 - `results/input_manifest.csv`: source paths, sizes, SHA-256 checksums and usage.
 - `results/run_metadata.json`: complete run specification.
 - `results/territory_presence_results.xlsx`: formatted review workbook.
+  When the previous-method baseline is supplied, it includes a dedicated
+  population-method comparison sheet.
+
+The complete runner generates every analytical output above, including the
+transposed CSV, comparisons, plots, manifest, metadata and review workbook.
+The retained previous-method file is an input to the method comparison.
 
 ## External source files
 
@@ -69,6 +82,8 @@ python "05 - Territory_presence/scripts/run_territory_presence.py" \
   --grid "05 - Territory_presence/results/grid_syria_0p1deg.csv" \
   --population-dir /path/to/worldpop_directory \
   --initial-period-shares /path/to/initial_actor_shares_by_period.csv \
+  --previous-period-shares \
+    "05 - Territory_presence/results/actor_shares_by_period_previous_population_method.csv" \
   --output-dir "05 - Territory_presence/results"
 ```
 

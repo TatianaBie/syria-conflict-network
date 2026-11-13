@@ -42,6 +42,7 @@ import pandas as pd
 
 LOG = logging.getLogger(__name__)
 EARTH_RADIUS_KM = 6371.0
+GRID_CELL_SIZE_DEGREES = 0.1
 IS_NAME = "The Islamic State"
 MAPPING_COLUMNS = (
     "Umbrella",
@@ -302,11 +303,18 @@ def load_grid(grid_path: Path) -> pd.DataFrame:
     return grid.reset_index(drop=True)
 
 
-def sample_population(raster_path: Path, lon: np.ndarray, lat: np.ndarray) -> np.ndarray:
-    """Sample WorldPop *people per pixel* values at given point coordinates.
+def integrate_cell_population(
+    raster_path: Path,
+    lon: np.ndarray,
+    lat: np.ndarray,
+    *,
+    cell_size_degrees: float = GRID_CELL_SIZE_DEGREES,
+) -> np.ndarray:
+    """Sum WorldPop people-per-pixel values inside each grid cell.
 
-    The original notebook calls this pop_density, but a PPP raster stores a
-    population count per raster pixel, not a population-density measurement.
+    Pixel centres on a cell's western or southern edge are included and those
+    on its eastern or northern edge are excluded, so adjacent cells do not
+    double-count boundary pixels.
     """
     import rasterio
 
@@ -315,13 +323,37 @@ def sample_population(raster_path: Path, lon: np.ndarray, lat: np.ndarray) -> np
     with rasterio.open(raster_path) as ds:
         if ds.crs is None or ds.crs.to_epsg() != 4326:
             raise ValueError(f"Expected EPSG:4326 WorldPop raster: {raster_path}")
-        samples = ds.sample(zip(lon, lat), masked=True)
-        pop = np.array([float(np.ma.filled(v[0], 0.0)) for v in samples])
+        population = ds.read(1)
         nodata = ds.nodata
-    good = np.isfinite(pop) & (pop >= 0)
-    if nodata is not None:
-        good &= pop != nodata
-    return np.where(good, pop, 0.0)
+        x_centres = ds.transform.c + (
+            np.arange(ds.width, dtype=float) + 0.5
+        ) * ds.transform.a
+        y_centres = ds.transform.f + (
+            np.arange(ds.height, dtype=float) + 0.5
+        ) * ds.transform.e
+
+    half_size = cell_size_degrees / 2
+    y_centres_ascending = y_centres[::-1]
+    totals = np.zeros(len(lon), dtype=float)
+    for index, (cell_lon, cell_lat) in enumerate(zip(lon, lat)):
+        left, right = cell_lon - half_size, cell_lon + half_size
+        bottom, top = cell_lat - half_size, cell_lat + half_size
+        column_start = np.searchsorted(x_centres, left, side="left")
+        column_stop = np.searchsorted(x_centres, right, side="left")
+        reverse_row_start = np.searchsorted(
+            y_centres_ascending, bottom, side="left"
+        )
+        reverse_row_stop = np.searchsorted(
+            y_centres_ascending, top, side="left"
+        )
+        row_start = len(y_centres) - reverse_row_stop
+        row_stop = len(y_centres) - reverse_row_start
+        values = population[row_start:row_stop, column_start:column_stop]
+        valid = np.isfinite(values) & (values >= 0)
+        if nodata is not None:
+            valid &= values != nodata
+        totals[index] = values[valid].sum(dtype=np.float64)
+    return totals
 
 
 def to_unit_sphere(lon: np.ndarray, lat: np.ndarray) -> np.ndarray:
@@ -382,19 +414,22 @@ def estimate_period(
     bandwidth_km: float,
     prior_weight: float,
     cutoff_sigma: float,
-    event_population_weight: bool,
+    cell_population: np.ndarray | None = None,
 ) -> pd.DataFrame:
     """Return fractional spatial allocations for one four-year period."""
     label, start, stop, pop_year = period
     raster = population_dir / f"syr_ppp_{pop_year}.tif"
     current = events.loc[events.year.between(start, stop)].copy()
-    cell_pop = sample_population(raster, grid.lon.to_numpy(), grid.lat.to_numpy())
+    cell_pop = (
+        integrate_cell_population(
+            raster, grid.lon.to_numpy(), grid.lat.to_numpy()
+        )
+        if cell_population is None
+        else np.asarray(cell_population, dtype=float)
+    )
     if cell_pop.sum() <= 0:
         raise ValueError(f"Population weights all zero for {label}")
-    event_pop = (
-        sample_population(raster, current.longitude.to_numpy(), current.latitude.to_numpy())
-        if event_population_weight else np.ones(len(current))
-    )
+    event_weights = np.ones(len(current), dtype=float)
 
     influence = np.full((len(grid), len(ACTORS)), prior_weight, dtype=float)
     grid_xyz = to_unit_sphere(grid.lon.to_numpy(), grid.lat.to_numpy())
@@ -406,7 +441,7 @@ def estimate_period(
             grid_xyz,
             current.longitude.to_numpy()[selection],
             current.latitude.to_numpy()[selection],
-            event_pop[selection],
+            event_weights[selection],
             bandwidth_km=bandwidth_km,
             cutoff_sigma=cutoff_sigma,
         )
@@ -417,7 +452,7 @@ def estimate_period(
     allocation = influence / row_total[:, None]
     result = grid.copy()
     result["period"] = label
-    result["pop_density"] = cell_pop  # Retain notebook's output column name.
+    result["cell_population"] = cell_pop
     result = pd.concat([result, pd.DataFrame(allocation, columns=ACTORS)], axis=1)
     result["dominant_actor"] = np.asarray(ACTORS)[allocation.argmax(axis=1)]
     LOG.info("%s: %s actor-event occurrences; population raster %s",
@@ -429,7 +464,7 @@ def aggregate_shares(grid_allocations: pd.DataFrame) -> pd.DataFrame:
     """Aggregate per-cell fractions with the corresponding WorldPop weights."""
     output = []
     for period, frame in grid_allocations.groupby("period", sort=False):
-        weights = frame["pop_density"].to_numpy(dtype=float)
+        weights = frame["cell_population"].to_numpy(dtype=float)
         weights /= weights.sum()
         shares = frame.loc[:, ACTORS].to_numpy(dtype=float).T @ weights
         output.append({"period": period, **dict(zip(ACTORS, shares))})
@@ -457,8 +492,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bandwidth-km", type=float, default=20.0)
     parser.add_argument("--cutoff-sigma", type=float, default=3.0)
     parser.add_argument("--prior", type=float, default=0.05, help="Pseudo-activity per actor/cell")
-    parser.add_argument("--no-event-population-weight", action="store_true",
-                        help="Sensitivity check: weight events equally, rather than by population")
     duplicate_opts = parser.add_mutually_exclusive_group()
     duplicate_opts.add_argument(
         "--keep-duplicate-actor-events", dest="deduplicate_actor_event",
@@ -489,6 +522,14 @@ def main() -> None:
         deduplicate=args.deduplicate_actor_event,
     )
     grid = load_grid(args.grid)
+    cell_populations = {
+        year: integrate_cell_population(
+            args.population_dir / f"syr_ppp_{year}.tif",
+            grid.lon.to_numpy(),
+            grid.lat.to_numpy(),
+        )
+        for year in {period[3] for period in PERIODS}
+    }
     frames = [
         estimate_period(
             events, grid, args.population_dir,
@@ -496,7 +537,7 @@ def main() -> None:
             bandwidth_km=args.bandwidth_km,
             prior_weight=args.prior,
             cutoff_sigma=args.cutoff_sigma,
-            event_population_weight=not args.no_event_population_weight,
+            cell_population=cell_populations[period[3]],
         )
         for period in PERIODS
     ]
@@ -527,12 +568,16 @@ def main() -> None:
         ),
         "grid_input": str(args.grid),
         "population_directory": str(args.population_dir),
-        "population_sampling": "Point samples at grid-cell centres (not cell-integrated population)",
+        "population_sampling": (
+            "Sum of WorldPop people-per-pixel values whose centres fall within "
+            "each 0.1-degree grid cell"
+        ),
         "periods": [dict(label=a, start=b, end=c, raster_year=d) for a, b, c, d in PERIODS],
         "bandwidth_km": args.bandwidth_km,
         "cutoff_sigma": args.cutoff_sigma,
         "pseudo_activity_per_actor_cell": args.prior,
-        "event_population_weighted": not args.no_event_population_weight,
+        "event_population_weighted": False,
+        "population_applied_once": True,
         "deduplicate_actor_event": args.deduplicate_actor_event,
         "actor_universe": list(ACTORS),
         "default_denominator": (

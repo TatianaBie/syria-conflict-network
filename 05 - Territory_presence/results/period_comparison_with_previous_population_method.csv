@@ -1,0 +1,4 @@
+period,total_variation_percentage_points,largest_absolute_change_actor,largest_absolute_change_percentage_points,previous_top_actor,updated_top_actor,previous_turkey_share,updated_turkey_share,previous_is_share,updated_is_share,pearson_correlation
+2013-2016,2.669554567247354,Ahrar al-Sham,1.157441647412269,Military Forces of Syria,Military Forces of Syria,0.0003305051337205,0.0005747181595042437,0.0759626881448918,0.06857198456255972,0.9992102447599339
+2017-2020,3.6692160260683795,Military Forces of Syria,1.759539454395831,Military Forces of Syria,Military Forces of Syria,0.0218506984909142,0.02500549407277392,0.1412949455777042,0.1284851099184126,0.9990195895193439
+2021-2024,3.1715595080923573,Military Forces of Syria,1.040285523736828,Military Forces of Syria,Military Forces of Syria,0.0166019648448002,0.019459861254692224,0.0866312223479453,0.07955638658990546,0.9993497979055835
