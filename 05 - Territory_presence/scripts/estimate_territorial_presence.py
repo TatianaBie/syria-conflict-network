@@ -238,8 +238,8 @@ def load_actor_events(
     )
     if not audit.empty:
         LOG.warning(
-            "%s: %s source actor labels (%s occurrences) were not retained; "
-            "see actor_mapping_audit.csv",
+            "%s: excluded %s source actor labels (%s occurrences) that were "
+            "unmapped or outside the fixed analysis universe",
             csv_path.name,
             f"{len(audit):,}",
             f"{audit['occurrences'].sum():,}",
