@@ -26,7 +26,6 @@ Dependencies: numpy, pandas, scipy, rasterio, openpyxl. Python >= 3.10.
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 import re
 import unicodedata
@@ -38,7 +37,6 @@ import pandas as pd
 LOG = logging.getLogger(__name__)
 EARTH_RADIUS_KM = 6371.0
 GRID_CELL_SIZE_DEGREES = 0.1
-IS_NAME = "The Islamic State"
 MAPPING_COLUMNS = (
     "Umbrella",
     "Stanford_Name",
@@ -497,7 +495,6 @@ def parse_args() -> argparse.Namespace:
         help="Explicitly select the default: count each actor once per RF-expanded row",
     )
     parser.set_defaults(deduplicate_actor_event=True)
-    parser.add_argument("--plot", action="store_true", help="Also draw a stacked share chart")
     return parser.parse_args()
 
 
@@ -508,10 +505,10 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    actor_mapping, mapping_table = load_actor_mapping(
+    actor_mapping, _ = load_actor_mapping(
         args.actor_mapping, sheet_name=args.actor_mapping_sheet
     )
-    events, actor_audit = load_actor_events(
+    events, _ = load_actor_events(
         args.events,
         actor_mapping=actor_mapping,
         deduplicate=args.deduplicate_actor_event,
@@ -538,65 +535,15 @@ def main() -> None:
     ]
     result = pd.concat(frames, ignore_index=True)
     shares = aggregate_shares(result)
-    result.to_csv(args.output_dir / "spatial_actor_allocations.csv", index=False)
-    shares.to_csv(args.output_dir / "actor_shares_by_period.csv", index=False)
-    actor_audit.to_csv(args.output_dir / "actor_mapping_audit.csv", index=False)
-
-    # *Separate*, explicitly conditional shares; never confuse with the baseline.
-    other_actors = [actor for actor in ACTORS if actor != IS_NAME]
-    conditional = shares[["period", *other_actors]].copy()
-    conditional[other_actors] = conditional[other_actors].div(
-        conditional[other_actors].sum(axis=1), axis=0
+    actor_rows = (
+        shares.set_index("period")
+        .reindex(columns=ACTORS)
+        .T.rename_axis("umbrella_actor")
+        .reset_index()
     )
-    conditional.to_csv(args.output_dir / "actor_shares_conditional_on_non_IS.csv", index=False)
+    actor_rows.to_csv(args.output_dir / "actor_shares_by_period.csv", index=False)
 
-    metadata = {
-        "interpretation": "Population-weighted spatial conflict presence; not observed territorial control",
-        "event_input": str(args.events),
-        "actor_mapping_workbook": str(args.actor_mapping),
-        "actor_mapping_sheet": args.actor_mapping_sheet,
-        "actor_mapping_aliases": len(actor_mapping),
-        "actor_mapping_umbrella_values": int(mapping_table["Umbrella"].dropna().nunique()),
-        "unretained_actor_labels": len(actor_audit),
-        "unretained_actor_occurrences": (
-            int(actor_audit["occurrences"].sum()) if not actor_audit.empty else 0
-        ),
-        "grid_input": str(args.grid),
-        "population_directory": str(args.population_dir),
-        "population_sampling": (
-            "Sum of WorldPop people-per-pixel values whose centres fall within "
-            "each 0.1-degree grid cell"
-        ),
-        "periods": [dict(label=a, start=b, end=c, raster_year=d) for a, b, c, d in PERIODS],
-        "bandwidth_km": args.bandwidth_km,
-        "cutoff_sigma": args.cutoff_sigma,
-        "pseudo_activity_per_actor_cell": args.prior,
-        "event_population_weighted": False,
-        "population_applied_once": True,
-        "deduplicate_actor_event": args.deduplicate_actor_event,
-        "actor_universe": list(ACTORS),
-        "default_denominator": (
-            f"All {len(ACTORS)} actors, including the Islamic State"
-        ),
-        "conditional_denominator": "All non-IS actors, in separately labelled output",
-        "number_of_grid_cells": len(grid),
-        "number_of_actor_event_occurrences": len(events),
-    }
-    (args.output_dir / "run_metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
-
-    if args.plot:
-        import matplotlib.pyplot as plt
-        top = shares[list(ACTORS)].mean(axis=0).nlargest(12).index.tolist()
-        plot = shares.set_index("period")[top]
-        plot["Other actors"] = 1 - plot.sum(axis=1)
-        ax = plot.plot(kind="bar", stacked=True, figsize=(11, 6), width=0.7)
-        ax.set(ylabel="Population-weighted spatial presence share", xlabel="Period", ylim=(0, 1))
-        ax.legend(loc="upper left", bbox_to_anchor=(1, 1), fontsize=8)
-        plt.tight_layout()
-        plt.savefig(args.output_dir / "presence_shares.png", dpi=180)
-        plt.close()
-
-    LOG.info("Saved period shares and spatial allocations to %s", args.output_dir)
+    LOG.info("Saved period shares to %s", args.output_dir)
     print(shares.set_index("period").round(4).to_string(max_cols=10))
 
 
